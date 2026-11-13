@@ -243,6 +243,10 @@ html[dir="ltr"] .sub { text-align: left; }
 }
 @keyframes edge { to { --spin: 360deg; } }
 
+/* live Baghdad clock */
+.clock { display: inline-flex; align-items: center; gap: 7px; color: var(--paper); font-size: .9375rem; font-variant-numeric: tabular-nums; direction: ltr; transform: translateZ(30px); margin-top: -6px; }
+.clock svg { width: 16px; height: 16px; color: var(--gold); }
+
 /* availability */
 .status {
   display: inline-flex; align-items: center; gap: 8px;
@@ -319,6 +323,7 @@ if (LANG === 'en') { document.documentElement.lang = 'en'; document.documentElem
       <div class="photo"><img src="photo.jpg" alt="صورة حسن أسعد" width="640" height="640"></div>
       <h1 data-ar="حسن أسعد" data-en="Hasan Asaad">حسن أسعد</h1>
       <span class="handle" data-ar="بغداد، العراق" data-en="Baghdad, Iraq">بغداد، العراق</span>
+      <span class="clock" aria-label="Baghdad time"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="clock"></span></span>
       <span class="status" id="status"><span class="dot" aria-hidden="true"></span><span id="statusText"></span></span>
       <span class="days" data-ar="متاح من الأحد إلى الخميس" data-en="Available Sunday to Thursday">متاح من الأحد إلى الخميس</span>
     </header>
@@ -446,6 +451,19 @@ function setLang(l) {
 setLang(LANG);
 langBtn.addEventListener('click', () => setLang(LANG === 'ar' ? 'en' : 'ar'));
 
+// live clock, always Baghdad time
+function showClock() {
+  let t;
+  try {
+    t = new Intl.DateTimeFormat(LANG === 'ar' ? 'ar-IQ-u-nu-latn' : 'en-US', { timeZone: 'Asia/Baghdad', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }).format(new Date());
+  } catch (e) {
+    t = new Date(Date.now() + 3 * 3600 * 1000).toISOString().slice(11, 19);
+  }
+  document.getElementById('clock').textContent = t;
+}
+showClock();
+setInterval(showClock, 1000);
+
 // availability: Sunday to Thursday, by Baghdad time (UTC+3)
 function showStatus() {
   const day = new Date(Date.now() + 3 * 3600 * 1000).getUTCDay(); // 0 = Sunday
@@ -478,6 +496,7 @@ intro.addEventListener('click', () => intro.classList.add('skip'));
 // soft click sound on every button and link
 let actx;
 function tick() {
+  try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
   try {
     actx = actx || new (window.AudioContext || window.webkitAudioContext)();
     if (actx.state === 'suspended') actx.resume();
